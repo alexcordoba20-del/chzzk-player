@@ -98,7 +98,7 @@ function launchFfplay(url) {
   const consumer = spawn(ffplay, [
     "-hide_banner", "-loglevel", "warning",
     "-x", "1280", "-y", "720",
-    "-window_title", "CHZZK Player — ffplay",
+    "-window_title", "Vigía — ffplay",
     "-f", "nut", "-i", "-"
   ], { detached: true, stdio: ["pipe", "ignore", "ignore"], windowsHide: true });
 
@@ -524,7 +524,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     backgroundColor: "#141517",
-    title: "CHZZK Player",
+    title: "Vigía",
     autoHideMenuBar: true,
     icon: path.join(__dirname, "icons", "icon.png"),
     webPreferences: {

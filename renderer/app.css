@@ -2,20 +2,22 @@
    (verde #00ffa3 sobre superficies grises muy oscuras). */
 
 :root {
-  --bg:            #141517;
-  --layer:         #1d1f22;
-  --layer-2:       #212325;
-  --layer-3:       #24272b;
-  --line:          #2e3033;
-  --line-strong:   #373a3f;
+  /* Identidad propia: el azul noche y el oro de la interfaz de Lost Ark.
+     Contrastes medidos sobre --bg: texto 15,7:1 · oro 9,1:1 · texto-2 6,1:1 · texto-3 4,9:1. */
+  --bg:            #0e1015;
+  --layer:         #161922;
+  --layer-2:       #1c2029;
+  --layer-3:       #232836;
+  --line:          #262b37;
+  --line-strong:   #333a4a;
 
-  --text:          #ffffff;
-  --text-2:        rgba(255, 255, 255, 0.62);
-  --text-3:        rgba(255, 255, 255, 0.52);   /* >= 5,1:1 en todos los fondos (antes 0.38: 3,5:1) */
+  --text:          #efe9dc;                       /* blanco pergamino, menos duro que #fff */
+  --text-2:        rgba(239, 233, 220, 0.60);
+  --text-3:        rgba(239, 233, 220, 0.52);
 
-  --accent:        #00ffa3;
-  --accent-dim:    rgba(0, 255, 163, 0.14);
-  --accent-line:   rgba(0, 255, 163, 0.45);
+  --accent:        #d8ad5f;                       /* oro: acción principal y estado activo */
+  --accent-dim:    rgba(216, 173, 95, 0.14);
+  --accent-line:   rgba(216, 173, 95, 0.50);
   --live:          #e03131;   /* texto blanco encima: 4,51:1 (antes #ff4b4b: 3,30:1) */
 
   --topbar-h:      56px;
@@ -89,7 +91,7 @@ svg .fill { fill: currentColor; stroke: none; }
   width: 28px; height: 28px;
   border-radius: 7px;
   background: var(--accent);
-  color: #04140d;
+  color: #14100a;
   font-weight: 800;
   font-size: 15px;
 }
@@ -525,7 +527,7 @@ body.theater .watch-info { display: none; }
 .btn.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #04140d;
+  color: #14100a;                                /* 9,1:1 sobre el oro */
 }
 .btn.primary:hover { filter: brightness(1.08); }
 .btn.ghost { background: transparent; }
@@ -807,3 +809,164 @@ kbd {
   .card:hover .card-thumb { transform: none; }
   .stage-overlay .spinner { animation: spin 1.6s linear infinite !important; }  /* el spinner sí indica carga */
 }
+
+/* ------------------------------------------------ identidad: marca */
+
+.brand-mark.cristal {
+  width: 28px; height: 28px;
+  background: none;
+  border-radius: 0;
+  color: var(--accent);
+}
+.brand-mark.cristal svg { width: 28px; height: 28px; stroke-width: 1.5; }
+.brand-mark.cristal .faceta { fill: var(--accent-dim); }
+.brand-text.vigia { letter-spacing: 0.2em; font-size: 14px; }
+.brand-text.vigia small {
+  display: block;
+  margin-top: 1px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--text-3);
+}
+
+/* ------------------------------------- identidad: etiqueta de raid (firma) */
+
+/* Solo aparece cuando el título del directo nombra una raid. */
+.raid-chip {
+  position: absolute;
+  top: 8px; left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px 3px 6px;
+  border: 1px solid var(--accent-line);
+  border-radius: 4px;
+  background: rgba(14, 16, 21, 0.86);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 16px;
+}
+.raid-chip svg { width: 11px; height: 11px; stroke-width: 2.2; }
+.raid-chip .faceta { fill: currentColor; }
+
+/* ================================================ identidad, segunda vuelta */
+
+/* Fondo: un resplandor azul noche arriba, como el cielo de la interfaz de Lost Ark. */
+.main {
+  background:
+    radial-gradient(1100px 520px at 30% -12%, rgba(52, 72, 120, 0.28), transparent 62%),
+    var(--bg);
+}
+
+/* Barra superior con filo de oro que se desvanece en los extremos. */
+.topbar {
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, transparent, var(--accent-line) 22%, var(--accent-line) 78%, transparent) 1;
+}
+
+/* Sección activa: barra de oro a la izquierda y degradado que se apaga. */
+.side-link.active {
+  background: linear-gradient(90deg, var(--accent-dim), transparent 85%);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* Títulos de página con tipografía de estandarte (Sitka viene con Windows). */
+.page-title {
+  font-family: "Sitka Banner", "Sitka Heading", Georgia, serif;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+}
+
+/* ---- cabecera tipo estandarte */
+.hero {
+  position: relative;
+  margin: -24px -28px 18px;
+  padding: 34px 28px 24px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+}
+.hero-bg {
+  position: absolute;
+  inset: -60px;
+  background-size: cover;
+  background-position: center 25%;
+  filter: blur(30px) saturate(1.3);
+  opacity: 0.42;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(14, 16, 21, 0.85), rgba(14, 16, 21, 0.25) 70%),
+    linear-gradient(180deg, transparent 40%, var(--bg));
+}
+.hero-inner { position: relative; z-index: 1; display: flex; align-items: flex-end; gap: 20px; }
+.hero .cat-hero {
+  width: 76px;
+  border-radius: 4px;
+  margin: 0;
+  box-shadow: 0 0 0 1px var(--accent-line), 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+.hero .page-title { font-size: 38px; line-height: 1; }
+.hero-ko { display: block; margin-top: 6px; color: var(--text-2); font-size: 14px; font-weight: 600; }
+.hero-ko:empty { display: none; }
+.hero-meta { margin-top: 12px; color: var(--text-2); font-size: 13px; font-variant-numeric: tabular-nums; }
+@media (max-width: 900px) { .hero { margin: -18px -16px 16px; padding: 26px 16px 20px; } .hero .page-title { font-size: 30px; } }
+
+/* ---- filtros por raid */
+.raid-filter { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+.raid-filter[hidden] { display: none; }
+.rf {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  background: var(--layer);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+.rf:hover { color: var(--text); border-color: var(--accent-line); }
+.rf.on { background: var(--accent); border-color: var(--accent); color: #14100a; }
+.rf-n { font-variant-numeric: tabular-nums; opacity: 0.75; }
+.rf-gem svg { width: 10px; height: 10px; display: block; }
+.rf-gem .faceta { fill: var(--accent); stroke: none; }
+.rf.on .rf-gem .faceta { fill: #14100a; }
+
+/* ---- tarjetas enmarcadas como una casilla de objeto de Lost Ark */
+.card { position: relative; }
+.card-thumb { border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(239, 233, 220, 0.06); }
+.card::before,
+.card::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  width: 18px; height: 18px;
+  border: 2px solid var(--accent);
+  border-bottom: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+  z-index: 2;
+}
+.card::before { left: -5px; border-right: 0; border-top-left-radius: 4px; }
+.card::after { right: -5px; border-left: 0; border-top-right-radius: 4px; }
+.card:hover::before, .card:hover::after,
+.card:focus-visible::before, .card:focus-visible::after { opacity: 1; }
+.card:hover .card-thumb,
+.card:focus-visible .card-thumb { box-shadow: 0 0 0 1px var(--accent-line), 0 10px 28px rgba(0, 0, 0, 0.55); }
+.card:focus-visible .card-thumb { outline: none; }
+
+/* Espectadores con el ojo en oro. */
+.badge-viewers { background: rgba(14, 16, 21, 0.82); color: var(--text); }
+.badge-viewers svg { color: var(--accent); }

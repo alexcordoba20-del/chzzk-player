@@ -111,8 +111,8 @@ async function comprobar(ventana) {
       avisado = sha;
       const { response } = await dialog.showMessageBox(ventana && !ventana.isDestroyed() ? ventana : undefined, {
         type: "info",
-        title: "CHZZK Player",
-        message: "Hay una versión nueva de CHZZK Player.",
+        title: "Vigía",
+        message: "Hay una versión nueva de Vigía.",
         detail: "Se aplicará la próxima vez que abras la app. ¿Reiniciar ahora?",
         buttons: ["Reiniciar ahora", "Más tarde"],
         defaultId: 0,

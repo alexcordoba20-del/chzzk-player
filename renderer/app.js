@@ -234,10 +234,14 @@ function liveCard(live, { pageCategory } = {}) {
   // se repetía en todas y no distinguía nada; queda solo el número de espectadores.
   return activable(el("article", {
     class: "card",
+    attrs: { "data-raid": raidOf(live.title) || "" },
     on: { click: () => navigate(route) }
   },
     el("div", { class: "card-thumb" },
       img,
+      raidOf(live.title)
+        ? el("span", { class: "raid-chip", html: CRISTAL }, el("span", { text: raidOf(live.title) }))
+        : null,
       el("span", { class: "badge-viewers", html: ICON.eye },
         el("span", { text: formatViewers(live.viewers) })
       )
@@ -258,6 +262,21 @@ function liveCard(live, { pageCategory } = {}) {
     )
   ), `${live.channelName}: ${live.title}, ${formatViewers(live.viewers)} espectadores`);
 }
+
+// Raids que se reconocen en los títulos coreanos (el nombre corto que usan los streamers).
+// Solo se marca cuando el título lo dice: mejor sin etiqueta que con una inventada.
+const RAIDS = [
+  [/카제로스|카제|종막/, "Kazeros"], [/에기르/, "Aegir"], [/아브렐슈드|아브렐|브렐/, "Brelshaza"],
+  [/모르둠/, "Mordum"], [/아르모체/, "Armoche"], [/베히모스|베히/, "Behemoth"],
+  [/에키드나|에키/, "Echidna"], [/카멘/, "Thaemine"], [/일리아칸|일리/, "Akkan"],
+  [/카양겔/, "Kayangel"], [/상아탑/, "Ivory Tower"], [/쿠크세이튼|쿠크/, "Kakul-Saydon"],
+  [/발탄/, "Valtan"], [/비아키스|비아/, "Vykas"]
+];
+function raidOf(title) {
+  for (const [re, name] of RAIDS) if (re.test(title || "")) return name;
+  return null;
+}
+const CRISTAL = '<svg viewBox="0 0 28 28" aria-hidden="true"><path class="faceta" d="M14 3l9 11-9 11-9-11z"/></svg>';
 
 // Añade paginación automática al llegar al final de la lista.
 function attachPager(container, loadNext) {
@@ -291,16 +310,40 @@ async function viewCategory(type, rawId) {
   const id = decodeURIComponent(rawId);
 
   const title = el("h1", { class: "page-title", text: id.replace(/_/g, " ") });
-  const sub = el("span", { class: "page-sub", text: "Cargando directos…" });
+  const titleKo = el("span", { class: "hero-ko" });
+  const sub = el("div", { class: "hero-meta", text: "Cargando directos…" });
   const poster = el("img", {
     class: "cat-hero",
     attrs: { alt: "", hidden: true }
   });
+  const heroBg = el("div", { class: "hero-bg", attrs: { "aria-hidden": "true" } });
 
+  // Cabecera tipo estandarte: el póster de la categoría, desenfocado, de fondo.
+  const filtros = el("div", { class: "raid-filter", attrs: { role: "group", "aria-label": "Filtrar por raid", hidden: true } });
   const page = el("div", { class: "page" },
-    el("div", { class: "page-head" }, poster, title, sub)
+    el("header", { class: "hero" }, heroBg,
+      el("div", { class: "hero-inner" }, poster, el("div", { class: "hero-text" }, title, titleKo, sub))),
+    filtros
   );
   const grid = el("div", { class: "grid" });
+
+  // Filtro por raid: cuenta lo que se ha cargado y oculta las tarjetas que no tocan.
+  let filtro = null;
+  const cuenta = new Map();
+  const contar = (items) => items.forEach((l) => { const r = raidOf(l.title) || ""; cuenta.set(r, (cuenta.get(r) || 0) + 1); });
+  const aplicar = () => { for (const c of grid.children) c.hidden = !!filtro && c.dataset.raid !== filtro; };
+  const pintarFiltros = () => {
+    clear(filtros);
+    const raids = [...cuenta.keys()].filter(Boolean).sort((a, b) => cuenta.get(b) - cuenta.get(a));
+    filtros.hidden = raids.length === 0;
+    const total = [...cuenta.values()].reduce((a, b) => a + b, 0);
+    const chip = (key, label, n) => el("button", {
+      class: "rf" + (filtro === key ? " on" : ""),
+      attrs: { type: "button", "aria-pressed": String(filtro === key) },
+      on: { click: () => { filtro = key; aplicar(); pintarFiltros(); } }
+    }, key ? el("span", { class: "rf-gem", html: CRISTAL }) : null, el("span", { text: label }), el("span", { class: "rf-n", text: String(n) }));
+    filtros.append(chip(null, "Todos", total), ...raids.map((r) => chip(r, r, cuenta.get(r))));
+  };
   const loading = skeletonGrid(8);
   page.append(grid, loading);
   render(page);
@@ -309,8 +352,11 @@ async function viewCategory(type, rawId) {
   // con el id formateado, que ya es legible.
   getCategoryInfo(type, id).then((info) => {
     if (!info) return;
-    title.textContent = info.label;
-    if (info.poster) { poster.src = info.poster; poster.hidden = false; }
+    if (info.label && info.label !== title.textContent) titleKo.textContent = info.label;
+    if (info.poster) {
+      poster.src = info.poster; poster.hidden = false;
+      heroBg.style.backgroundImage = `url("${info.poster}")`;
+    }
   }).catch(() => {});
 
   let cursor = "";
@@ -324,14 +370,19 @@ async function viewCategory(type, rawId) {
     return;
   }
 
-  sub.textContent = `${first.items.length}+ directos`;
+  // Los directos son de Corea: decir qué hora es allí explica por qué hay más o menos gente.
+  const horaCorea = new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Seoul" }).format(new Date());
+  const espectadores = first.items.reduce((a, l) => a + (l.viewers || 0), 0);
+  sub.textContent = `${first.items.length}+ directos · ${formatViewers(espectadores)} espectadores · en Corea son las ${horaCorea}`;
   first.items.forEach((l) => grid.append(liveCard(l, { pageCategory: id })));
+  contar(first.items); pintarFiltros();
   cursor = first.cursor;
 
   attachPager(page, async () => {
     if (!cursor) return false;
     const next = await getCategoryLives(type, id, { size: 24, cursor });
     next.items.forEach((l) => grid.append(liveCard(l, { pageCategory: id })));
+    contar(next.items); pintarFiltros(); aplicar();
     cursor = next.cursor;
     return !!cursor && next.items.length > 0;
   });
@@ -413,7 +464,7 @@ async function viewBiliWatch(roomId) {
 
   state.detail = detail;
   markActiveChannel();
-  document.title = `${detail.channelName || "Bilibili"} · CHZZK Player`;
+  document.title = `${detail.channelName || "Bilibili"} · Vigía`;
   buildWatchInfo(info, detail);
 
   if (!detail.open) {
@@ -632,7 +683,7 @@ async function viewVod(videoNo) {
   }
   if (!document.body.contains(video)) return;   // se cambió de vista mientras tanto
 
-  document.title = `${meta.title || "Directo pasado"} · CHZZK Player`;
+  document.title = `${meta.title || "Directo pasado"} · Vigía`;
   buildVodInfo(info, meta);
   if (meta.channelId) {
     void appendChannelVideos(wrap, meta.channelId, "Más directos de " + meta.channelName, meta.videoNo);
@@ -1011,7 +1062,7 @@ async function viewWatch(channelId) {
 
   state.detail = detail;
   markActiveChannel();
-  document.title = `${detail.channelName} · CHZZK Player`;
+  document.title = `${detail.channelName} · Vigía`;
 
   buildWatchInfo(info, detail);
 
@@ -1597,7 +1648,7 @@ async function handleRoute() {
   destroyPlayer();
   markActiveNav();
   markActiveChannel();
-  document.title = "CHZZK Player";
+  document.title = "Vigía";
   closeNav();
 
   const parts = hash.replace(/^#\//, "").split("/");

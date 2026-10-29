@@ -1,4 +1,4 @@
-# CHZZK Player — versión de escritorio
+# Vigía — directos de Lost Ark (antes CHZZK Player)
 
 Aplicación de escritorio (Electron) para ver los directos de **Lost Ark**, con
 dos fuentes: **CHZZK** (Corea) y **Bilibili** (China). Ventana propia, sin
@@ -7,6 +7,14 @@ reproduce dentro de la misma ventana.
 
 En la barra lateral hay una entrada para cada una: *Lost Ark CHZZK* y
 *Bilibili Lost Ark*. Ambas comparten grilla, reproductor y favoritos.
+
+## Identidad
+
+La app se llama **Vigía** (Lost Ark · KR / CN): azul noche y oro de la interfaz de Lost Ark,
+títulos en Sitka (viene con Windows) y, como elemento propio, la etiqueta de raid que se
+detecta en los títulos coreanos (con filtro por raid en la cabecera). Por compatibilidad con
+el actualizador, el ejecutable, la carpeta de `%APPDATA%` y el repositorio siguen llamándose
+`CHZZK Player` / `chzzk-player`.
 
 ## Arrancar
 
