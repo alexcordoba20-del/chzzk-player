@@ -31,6 +31,19 @@ acompañan) junto con `ffmpeg.exe`.
 > electron-builder descomprime sus herramientas de firma creando enlaces
 > simbólicos, y sin ese permiso falla con *«Cannot create symbolic link»*.
 
+## Actualizaciones automáticas
+
+La app se actualiza sola desde GitHub (`alexcordoba20-del/chzzk-player`): al abrirla
+y cada 30 minutos mira si hay un commit nuevo; si lo hay, lo descarga en
+`%APPDATA%\CHZZK Playerctualizacion` y pregunta si reiniciar.
+
+- `arranque.js` va dentro de `app.asar` y **no se actualiza**: elige entre la versión
+  descargada y la incluida. Si la descargada falla al cargar, usa la incluida.
+- `actualizador.js` y todo lo demás sí se actualizan.
+- Para publicar un cambio: `Publicar cambios.cmd` (o `git commit` + `git push`).
+- Solo hace falta recompilar (`npm run dist`) si cambia `arranque.js`, la versión de
+  Electron o `package.json`.
+
 ## El motor de reproducción
 
 La app usa **ffmpeg**, no el reproductor HLS del navegador. La razón es medible:
