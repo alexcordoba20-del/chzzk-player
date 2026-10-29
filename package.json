@@ -1,0 +1,41 @@
+{
+  "name": "chzzk-player",
+  "version": "1.0.0",
+  "description": "Reproductor de escritorio para los directos de Lost Ark en CHZZK",
+  "main": "arranque.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win dir --x64",
+    "dist:portable": "electron-builder --win portable --x64"
+  },
+  "author": "Alex",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^34.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.alex.chzzkplayer",
+    "productName": "CHZZK Player",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "arranque.js",
+      "actualizador.js",
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "icons/**/*"
+    ],
+    "win": {
+      "icon": "icons/icon.ico",
+      "target": [
+        "portable"
+      ]
+    },
+    "portable": {
+      "artifactName": "CHZZK-Player.exe"
+    }
+  }
+}
