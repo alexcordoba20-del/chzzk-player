@@ -44,10 +44,27 @@ function el(tag, opts = {}, ...children) {
     if (v != null && v !== false) node.setAttribute(k, v === true ? "" : v);
   }
   if (opts.on) for (const [ev, fn] of Object.entries(opts.on)) node.addEventListener(ev, fn);
+  // Los botones de solo icono usan su title como nombre para lectores de pantalla.
+  if ((tag === "button" || tag === "select") && node.title && !node.hasAttribute("aria-label")) {
+    node.setAttribute("aria-label", node.title);
+  }
   for (const child of children.flat()) {
     if (child == null || child === false) continue;
     node.append(child);
   }
+  return node;
+}
+
+// Hace usable con el teclado un elemento que solo respondía al ratón:
+// entra en el orden de Tab y se activa con Enter o Espacio.
+function activable(node, label) {
+  node.tabIndex = 0;
+  node.setAttribute("role", "link");
+  if (label) node.setAttribute("aria-label", label);
+  node.addEventListener("keydown", (e) => {
+    if (e.target !== node) return;
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); node.click(); }
+  });
   return node;
 }
 
@@ -144,7 +161,9 @@ function channelRow(channel) {
     channel.live ? el("span", { class: "chan-live", text: formatViewers(channel.viewers) }) : null
   );
   item.dataset.channelId = channel.channelId;
-  return item;
+  return activable(item, channel.live
+    ? `${channel.channelName}, en directo, ${formatViewers(channel.viewers)} espectadores`
+    : channel.channelName);
 }
 
 // La lista lateral son los propios canales de Lost Ark que están emitiendo.
@@ -177,7 +196,7 @@ async function loadRecommended() {
 
 // ------------------------------------------------------------ tarjetas
 
-function liveCard(live) {
+function liveCard(live, { pageCategory } = {}) {
   const thumb = thumbUrl(live.thumbnail, 480) || live.fallbackThumbnail;
 
   const img = el("img", {
@@ -188,7 +207,9 @@ function liveCard(live) {
     else img.src = "icons/icon128.png";
   }, { once: false });
 
-  const category = live.categoryLabel
+  // En la página de una categoría, repetirla en cada tarjeta no aporta nada.
+  const sameCategory = pageCategory && live.categoryId === pageCategory;
+  const category = live.categoryLabel && !sameCategory
     ? el("div", {
         class: "card-category",
         text: live.categoryLabel,
@@ -207,13 +228,16 @@ function liveCard(live) {
     ? `#/bwatch/${live.channelId}`
     : `#/watch/${live.channelId}`;
 
-  return el("article", {
+  if (category) activable(category, `Categoría ${live.categoryLabel}`);
+
+  // Todas las tarjetas de estas grillas son directos: la insignia "EN DIRECTO"
+  // se repetía en todas y no distinguía nada; queda solo el número de espectadores.
+  return activable(el("article", {
     class: "card",
     on: { click: () => navigate(route) }
   },
     el("div", { class: "card-thumb" },
       img,
-      el("span", { class: "badge-live", text: "EN DIRECTO" }),
       el("span", { class: "badge-viewers", html: ICON.eye },
         el("span", { text: formatViewers(live.viewers) })
       )
@@ -232,7 +256,7 @@ function liveCard(live) {
         category
       )
     )
-  );
+  ), `${live.channelName}: ${live.title}, ${formatViewers(live.viewers)} espectadores`);
 }
 
 // Añade paginación automática al llegar al final de la lista.
@@ -301,13 +325,13 @@ async function viewCategory(type, rawId) {
   }
 
   sub.textContent = `${first.items.length}+ directos`;
-  first.items.forEach((l) => grid.append(liveCard(l)));
+  first.items.forEach((l) => grid.append(liveCard(l, { pageCategory: id })));
   cursor = first.cursor;
 
   attachPager(page, async () => {
     if (!cursor) return false;
     const next = await getCategoryLives(type, id, { size: 24, cursor });
-    next.items.forEach((l) => grid.append(liveCard(l)));
+    next.items.forEach((l) => grid.append(liveCard(l, { pageCategory: id })));
     cursor = next.cursor;
     return !!cursor && next.items.length > 0;
   });
@@ -457,7 +481,7 @@ function vodCard(video) {
         el("span", { attrs: { style: `width:${Math.min(100, (resume / video.duration) * 100).toFixed(1)}%` } }))
     : null;
 
-  return el("article", {
+  return activable(el("article", {
     class: "card" + (video.geoBlocked ? " unavailable" : ""),
     attrs: {
       "data-video-no": String(video.videoNo),
@@ -488,7 +512,8 @@ function vodCard(video) {
         el("div", { class: "card-category", text: timeAgo(video.publishedAt) })
       )
     )
-  );
+  ), `${video.channelName}: ${video.title}, ${timeAgo(video.publishedAt)}` +
+     (video.geoBlocked ? ", solo disponible en Corea" : ""));
 }
 
 async function viewVods() {
@@ -702,8 +727,15 @@ function startVodPlayback(video, meta, overlay, bar) {
   bar.append(
     playBtn, backBtn, fwdBtn, cur, seek, total, volume, quality,
     el("button", {
-      class: "btn", html: ICON.theater, attrs: { title: "Modo teatro (t)" },
-      on: { click: () => document.body.classList.toggle("theater") }
+      class: "btn", html: ICON.theater,
+      attrs: { title: "Modo teatro (t)", "aria-pressed": String(document.body.classList.contains("theater")) },
+      on: {
+        click: (e) => {
+          const on = document.body.classList.toggle("theater");
+          e.currentTarget.classList.toggle("on", on);
+          e.currentTarget.setAttribute("aria-pressed", String(on));
+        }
+      }
     }),
     el("button", {
       class: "btn", html: VOD_ICON.fullscreen, attrs: { title: "Pantalla completa (f)" },
@@ -1119,11 +1151,13 @@ function buildControls(bar, detail, video, player) {
     bar.append(el("button", {
       class: "btn fav" + (isFavorite(detail.channelId) ? " on" : ""),
       html: ICON.heart,
-      attrs: { title: "Favorito" },
+      attrs: { title: "Favorito", "aria-pressed": String(isFavorite(detail.channelId)) },
       on: {
         click: async (e) => {
+          const btn = e.currentTarget;
           const added = await toggleFavorite(detail);
-          e.currentTarget.classList.toggle("on", added);
+          btn.classList.toggle("on", added);
+          btn.setAttribute("aria-pressed", String(added));
           toast(added ? "Añadido a favoritos" : "Quitado de favoritos");
         }
       }
@@ -1132,11 +1166,13 @@ function buildControls(bar, detail, video, player) {
 
   bar.append(
     el("button", {
-      class: "btn", html: ICON.theater, attrs: { title: "Modo teatro" },
+      class: "btn", html: ICON.theater,
+      attrs: { title: "Modo teatro (t)", "aria-pressed": String(document.body.classList.contains("theater")) },
       on: {
         click: (e) => {
-          document.body.classList.toggle("theater");
-          e.currentTarget.classList.toggle("on", document.body.classList.contains("theater"));
+          const on = document.body.classList.toggle("theater");
+          e.currentTarget.classList.toggle("on", on);
+          e.currentTarget.setAttribute("aria-pressed", String(on));
         }
       }
     }),
@@ -1626,6 +1662,7 @@ $("#refreshBtn").addEventListener("click", () => {
 });
 
 $("#openManual").addEventListener("click", () => $("#manualDialog").showModal());
+$("#openKeys").addEventListener("click", () => $("#keysDialog").showModal());
 
 $("#manualForm").addEventListener("submit", (e) => {
   const value = $("#manualInput").value.trim();
@@ -1641,7 +1678,11 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") document.activeElement.blur();
     return;
   }
+  // Con una tarjeta, enlace o botón enfocado, Enter y Espacio son para él.
+  if ((e.key === " " || e.key === "Enter") && e.target.closest &&
+      e.target.closest('[role="link"], button, a, select')) return;
   const video = main.querySelector("video");
+  if (e.key === "?") { e.preventDefault(); $("#keysDialog").showModal(); return; }
   if (e.key === "/") { e.preventDefault(); $("#searchInput").focus(); return; }
   if (!video) return;
   if (e.key === " " || e.key === "k") { e.preventDefault(); video.paused ? video.play() : video.pause(); }
