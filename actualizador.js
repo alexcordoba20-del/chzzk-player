@@ -130,6 +130,8 @@ async function comprobar(ventana) {
 // obtenerVentana: función que devuelve la ventana principal (para anclar el aviso).
 function iniciar(obtenerVentana) {
   if (!app.isPackaged) return;                      // con "npm start" no se actualiza
+  const base = global.CHZZK_BASE || __dirname;
+  console.log("CHZZK Player: versión en uso:", base.includes("actualizacion") ? path.basename(base) + " (descargada)" : "incluida");
   setTimeout(() => comprobar(obtenerVentana()), 8000);
   setInterval(() => comprobar(obtenerVentana()), CADA);
 }
